@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -70,6 +71,14 @@ export default function WatchScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
+      ) : Platform.OS === "web" ? (
+        <iframe
+          key={key}
+          src={embedUrl}
+          style={{ flex: 1, border: "none", width: "100%", height: "100%" }}
+          allowFullScreen
+          allow="autoplay; encrypted-media; picture-in-picture"
+        />
       ) : (
         <WebView
           key={key}
