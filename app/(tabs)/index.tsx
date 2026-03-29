@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -26,7 +26,23 @@ export default function HomeScreen() {
   const [people, setPeople] = useState<TrendingItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // In-memory cache so re-mounting (tab switches) skips the network round-trip
+  const cache = useRef<{
+    movies: TrendingItem[];
+    tvShows: TrendingItem[];
+    people: TrendingItem[];
+    featured: TrendingItem | null;
+  } | null>(null);
+
   useEffect(() => {
+    if (cache.current) {
+      setMovies(cache.current.movies);
+      setTvShows(cache.current.tvShows);
+      setPeople(cache.current.people);
+      setFeatured(cache.current.featured);
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       try {
         const [moviesRes, tvRes, peopleRes] = await Promise.all([
@@ -40,7 +56,14 @@ export default function HomeScreen() {
         const allMedia = [...moviesRes.results, ...tvRes.results].filter(
           (i) => i.media_type !== "person" && !!(i as any).backdrop_path
         );
-        setFeatured(pickRandom(allMedia) ?? null);
+        const featuredItem = pickRandom(allMedia) ?? null;
+        setFeatured(featuredItem);
+        cache.current = {
+          movies: moviesRes.results,
+          tvShows: tvRes.results,
+          people: peopleRes.results,
+          featured: featuredItem,
+        };
       } finally {
         setLoading(false);
       }

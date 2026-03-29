@@ -24,7 +24,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "in.pavelray.streamhub",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -37,6 +38,13 @@
     "newArchEnabled": true,
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d535f340-35c7-4416-8c93-fceeb1173b0e"
+      }
+    },
+    "owner": "pavelray"
   }
 }

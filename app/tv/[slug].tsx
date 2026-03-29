@@ -247,10 +247,21 @@ export default function TVDetailScreen() {
           {/* Streaming providers */}
           {providers && (providers.flatrate?.length || providers.rent?.length) ? (
             <View style={[styles.section, { borderTopColor: theme.colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Where to Watch</Text>
+              <View style={styles.providerTitleRow}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Where to Watch</Text>
+                {providers.link ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(providers.link!)}>
+                    <Text style={[styles.justWatchLink, { color: theme.colors.accent2 }]}>View on JustWatch ›</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
               <View style={styles.providerRow}>
                 {(providers.flatrate ?? []).concat(providers.rent ?? []).slice(0, 8).map((p) => (
-                  <View key={p.provider_id} style={styles.providerItem}>
+                  <TouchableOpacity
+                    key={p.provider_id}
+                    style={styles.providerItem}
+                    onPress={() => providers.link && Linking.openURL(providers.link)}
+                  >
                     <Image
                       source={{ uri: `https://image.tmdb.org/t/p/w92${p.logo_path}` }}
                       style={styles.providerLogo}
@@ -258,7 +269,7 @@ export default function TVDetailScreen() {
                     <Text style={[styles.providerName, { color: theme.colors.textMuted }]} numberOfLines={1}>
                       {p.provider_name}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>
@@ -381,6 +392,8 @@ const styles = StyleSheet.create({
   providerItem: { alignItems: "center", width: 56 },
   providerLogo: { width: 44, height: 44, borderRadius: 10 },
   providerName: { fontSize: 10, marginTop: 4, textAlign: "center" },
+  providerTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  justWatchLink: { fontSize: 13, fontWeight: "600" },
   castRow: { flexDirection: "row", gap: 14 },
   castMember: { width: 80, alignItems: "center" },
   castImage: { width: 72, height: 72, borderRadius: 36 },

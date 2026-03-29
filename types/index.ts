@@ -260,6 +260,8 @@ export interface DiscoverFilters {
 
 // ─── Watchlist ────────────────────────────────────────────────────────────────
 
+export type WatchStatus = "plan_to_watch" | "watching" | "completed";
+
 export interface WatchlistItem {
   id: number;
   title: string;
@@ -267,7 +269,7 @@ export interface WatchlistItem {
   mediaType: "movie" | "tv";
   addedAt: number;
   vote_average?: number;
-  release_date?: string;
+  status?: WatchStatus;
 }
 
 // ─── Mood Search ──────────────────────────────────────────────────────────────

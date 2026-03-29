@@ -6,7 +6,8 @@ export function toSlug(title: string, id: number): string {
 
 export function idFromSlug(slug: string): number {
   const parts = slug.split("-");
-  return parseInt(parts[parts.length - 1], 10);
+  const parsed = parseInt(parts[parts.length - 1], 10);
+  return isNaN(parsed) ? 0 : parsed;
 }
 
 export function formatRuntime(minutes: number): string {

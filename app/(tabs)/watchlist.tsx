@@ -9,11 +9,11 @@ import {
   Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Trash2, Bookmark } from "lucide-react-native";
+import { Trash2, Bookmark, CheckCircle2, PlayCircle, Clock } from "lucide-react-native";
 import { useTheme } from "@/theme/ThemeContext";
 import { useWatchlistStore } from "@/store/watchlistStore";
 import { posterUrl } from "@/lib/tmdb";
-import { WatchlistItem } from "@/types";
+import { WatchlistItem, WatchStatus } from "@/types";
 import { useRouter } from "expo-router";
 import { toSlug } from "@/utils/helpers";
 
@@ -24,7 +24,15 @@ export default function WatchlistScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { items, remove, clear } = useWatchlistStore();
+  const { items, remove, clear, updateStatus } = useWatchlistStore();
+
+  const STATUS_CONFIG: Record<WatchStatus, { label: string; color: string; Icon: any }> = {
+    plan_to_watch: { label: "Plan", color: theme.colors.textMuted, Icon: Clock },
+    watching: { label: "Watching", color: theme.colors.accent1, Icon: PlayCircle },
+    completed: { label: "Done", color: "#22c55e", Icon: CheckCircle2 },
+  };
+
+  const STATUS_CYCLE: WatchStatus[] = ["plan_to_watch", "watching", "completed"];
 
   const movies = items.filter((i) => i.mediaType === "movie");
   const tvShows = items.filter((i) => i.mediaType === "tv");
@@ -37,6 +45,9 @@ export default function WatchlistScreen() {
 
   const renderItem = ({ item }: { item: WatchlistItem }) => {
     const imgUri = posterUrl(item.poster_path, "w200");
+    const statusKey: WatchStatus = item.status ?? "plan_to_watch";
+    const { label, color, Icon } = STATUS_CONFIG[statusKey];
+    const nextStatus = STATUS_CYCLE[(STATUS_CYCLE.indexOf(statusKey) + 1) % STATUS_CYCLE.length];
     return (
       <TouchableOpacity
         style={[styles.item, { width: ITEM_WIDTH }]}
@@ -63,13 +74,23 @@ export default function WatchlistScreen() {
         <Text style={[styles.itemTitle, { color: theme.colors.text }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <TouchableOpacity
-          style={styles.removeBtn}
-          onPress={() => remove(item.id)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Trash2 size={12} color={theme.colors.textMuted} />
-        </TouchableOpacity>
+        {/* Status + remove row */}
+        <View style={styles.itemActions}>
+          <TouchableOpacity
+            style={[styles.statusBtn, { borderColor: color }]}
+            onPress={() => updateStatus(item.id, nextStatus)}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Icon size={10} color={color} />
+            <Text style={[styles.statusText, { color }]}>{label}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => remove(item.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Trash2 size={12} color={theme.colors.textMuted} />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -219,12 +240,23 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     fontWeight: "500",
   },
-  removeBtn: {
-    position: "absolute",
-    top: 6,
-    right: 10,
-    backgroundColor: "rgba(0,0,0,0.6)",
+  itemActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 5,
+  },
+  statusBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    borderWidth: 1,
     borderRadius: 6,
-    padding: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  statusText: {
+    fontSize: 9,
+    fontWeight: "700",
   },
 });

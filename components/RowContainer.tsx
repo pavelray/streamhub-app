@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
 import { useTheme } from "@/theme/ThemeContext";
 import { MediaCard } from "./MediaCard";
@@ -6,6 +6,7 @@ import { TrendingItem } from "@/types";
 import { ChevronRight } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
+const DEFAULT_CARD_W = (width - 48) / 2.3;
 
 interface RowContainerProps {
   title: string;
@@ -23,6 +24,11 @@ export function RowContainer({
   cardWidth,
 }: RowContainerProps) {
   const { theme } = useTheme();
+
+  const snapInterval = useMemo(
+    () => (cardWidth ?? DEFAULT_CARD_W) + 12,
+    [cardWidth]
+  );
 
   return (
     <View style={styles.container}>
@@ -42,7 +48,7 @@ export function RowContainer({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        snapToInterval={(cardWidth ?? (width - 48) / 2.3) + 12}
+        snapToInterval={snapInterval}
         decelerationRate="fast"
       />
     </View>

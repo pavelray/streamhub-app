@@ -84,7 +84,13 @@ export function LandingHeader({ item }: LandingHeaderProps) {
           <View style={styles.buttons}>
             <TouchableOpacity
               style={[styles.primaryBtn, { backgroundColor: theme.colors.accent1 }]}
-              onPress={() => router.push(`/watch/movie/${media.id}` as any)}
+              onPress={() =>
+                router.push(
+                  (media.media_type === "tv"
+                    ? `/watch/tv/${media.id}?season=1&episode=1`
+                    : `/watch/movie/${media.id}`) as any
+                )
+              }
               activeOpacity={0.85}
             >
               <Play size={16} color="#fff" fill="#fff" />

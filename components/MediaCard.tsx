@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   TouchableOpacity,
   View,
@@ -23,7 +23,7 @@ interface MediaCardProps {
   width?: number;
 }
 
-export function MediaCard({ item, width: cardWidth = CARD_WIDTH }: MediaCardProps) {
+export const MediaCard = memo(function MediaCard({ item, width: cardWidth = CARD_WIDTH }: MediaCardProps) {
   const router = useRouter();
   const { theme } = useTheme();
   const { add, remove, has } = useWatchlistStore();
@@ -138,7 +138,7 @@ export function MediaCard({ item, width: cardWidth = CARD_WIDTH }: MediaCardProp
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

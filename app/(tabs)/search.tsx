@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -11,12 +11,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Search as SearchIcon, X, Filter } from "lucide-react-native";
+import { Search as SearchIcon, X, Filter, Clock, Trash2 } from "lucide-react-native";
 import { useTheme } from "@/theme/ThemeContext";
 import { searchMulti, discover, MOVIE_GENRES, TV_GENRES } from "@/lib/tmdb";
 import { TrendingItem } from "@/types";
 import { MediaCard } from "@/components/MediaCard";
 import { DiscoverSheet } from "@/components/DiscoverSheet";
+import { useSearchHistoryStore } from "@/store/searchHistoryStore";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2.3;
@@ -43,6 +44,8 @@ export default function SearchScreen() {
   const [totalPages, setTotalPages] = useState(1);
   const [showDiscover, setShowDiscover] = useState(false);
   const [moodLabel, setMoodLabel] = useState<string | null>(null);
+  const [inputFocused, setInputFocused] = useState(false);
+  const { history, push: pushHistory, remove: removeHistory, clear: clearHistory } = useSearchHistoryStore();
 
   // Handle mood search navigation params
   useEffect(() => {
@@ -99,8 +102,26 @@ export default function SearchScreen() {
   };
 
   const loadMore = () => {
-    if (page < totalPages && !loading && query.trim()) {
+    if (page >= totalPages || loading) return;
+    if (query.trim()) {
       handleSearch(query, page + 1);
+    } else if (moodLabel && params.genreId) {
+      // mood-based pagination
+      const genreId = parseInt(params.genreId, 10);
+      const mediaType = (params.mediaType ?? "movie") as "movie" | "tv";
+      const sortBy = params.sortBy ?? "popularity.desc";
+      const minRating = parseFloat(params.minRating ?? "0");
+      setLoading(true);
+      discover({ mediaType, genreId, sortBy, minRating, page: page + 1 })
+        .then((res) => {
+          const mapped = res.results.map((r) => ({
+            ...r,
+            media_type: mediaType,
+          })) as TrendingItem[];
+          setResults((prev) => [...prev, ...mapped]);
+          setPage(page + 1);
+        })
+        .finally(() => setLoading(false));
     }
   };
 
@@ -134,6 +155,8 @@ export default function SearchScreen() {
             }}
             returnKeyType="search"
             onSubmitEditing={() => handleSearch(query, 1)}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={handleClear}>
@@ -162,6 +185,37 @@ export default function SearchScreen() {
       {loading && results.length === 0 ? (
         <View style={styles.loading}>
           <ActivityIndicator size="large" color={theme.colors.accent1} />
+        </View>
+      ) : results.length === 0 && !moodLabel && history.length > 0 && !query.trim() ? (
+        // Show search history when idle
+        <View style={{ flex: 1 }}>
+          <View style={[styles.historyHeader]}>
+            <Text style={[styles.historyTitle, { color: theme.colors.text }]}>Recent Searches</Text>
+            <TouchableOpacity onPress={clearHistory}>
+              <Text style={[styles.clearHistory, { color: theme.colors.accent1 }]}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+          {history.map((term) => (
+            <TouchableOpacity
+              key={term}
+              style={[styles.historyRow, { borderBottomColor: theme.colors.border }]}
+              onPress={() => {
+                setQuery(term);
+                handleSearch(term, 1);
+              }}
+            >
+              <Clock size={14} color={theme.colors.textMuted} style={{ marginRight: 10 }} />
+              <Text style={[styles.historyTerm, { color: theme.colors.text }]} numberOfLines={1}>
+                {term}
+              </Text>
+              <TouchableOpacity
+                onPress={() => removeHistory(term)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <X size={14} color={theme.colors.textMuted} />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          ))}
         </View>
       ) : results.length === 0 ? (
         <View style={styles.empty}>
@@ -278,5 +332,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 4,
     paddingBottom: 32,
+  },
+  historyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  historyTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  clearHistory: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  historyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  historyTerm: {
+    flex: 1,
+    fontSize: 14,
+    marginLeft: 2,
   },
 });
