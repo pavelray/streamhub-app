@@ -136,7 +136,7 @@ export default function PersonDetailScreen() {
             <FlatList
               data={credits}
               horizontal
-              keyExtractor={(item) => `credit-${item.media_type}-${item.id}`}
+              keyExtractor={(item, index) => `credit-${item.media_type}-${item.id}-${index}`}
               renderItem={({ item }) => <MediaCard item={item} />}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingLeft: 0, paddingRight: 4 }}
